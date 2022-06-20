@@ -31,7 +31,7 @@ const __jixia_extension_object = (function () {
 					return
 				}
 				_last_msg_id = msg_id
-				this.append(msg)
+				this.append(msg.innerHTML)
 			},
 			get_last: function () {
 				if (_container.length == 0) return null
