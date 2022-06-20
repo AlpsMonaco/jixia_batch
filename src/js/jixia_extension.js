@@ -194,15 +194,15 @@ const __jixia_extension_object = (function () {
 					return
 				} else {
 					action.fix()
-					_timer(1000)
+					await _timer(1000)
 					_close_dialog()
-					_timer(1000)
+					await _timer(1000)
 					continue
 				}
 			} catch {
 				_msg_container.reset()
 				_close_dialog()
-				_timer(1000)
+				await _timer(1000)
 				continue
 			}
 		}
