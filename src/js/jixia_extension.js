@@ -93,7 +93,7 @@ const __jixia_extension_object = (function () {
 			let interval = setInterval(() => {
 				let msg = _msg_container.get_last()
 				if (msg != null) {
-					if (_parse_msg(msg.innerHTML) == _enum_msg_status.RESOLVE_FAILED) {
+					if (_parse_msg(msg) == _enum_msg_status.RESOLVE_FAILED) {
 						clearInterval(interval)
 						reject()
 					}
@@ -131,6 +131,9 @@ const __jixia_extension_object = (function () {
 			return _enum_msg_status.RESOLVE_FAILED
 		}
 		if (msg.indexOf('API连接中') != -1) {
+			return _enum_msg_status.RESOLVE_FAILED
+		}
+		if (msg.indexOf('API连接失败') != -1) {
 			return _enum_msg_status.RESOLVE_FAILED
 		}
 		return _enum_msg_status.ERROR
@@ -195,19 +198,31 @@ const __jixia_extension_object = (function () {
 				} else {
 					action.fix()
 					await _timer(1000)
-					_close_dialog()
-					await _timer(1000)
+					await _wait_util_dialog_close()
 					continue
 				}
 			} catch {
 				_msg_container.reset()
 				_close_dialog()
 				await _timer(1000)
+				await _wait_util_dialog_close()
 				continue
 			}
 		}
 	}
 
+
+	function _wait_util_dialog_close() {
+		return new Promise((resolve, reject) => {
+			let interval = setInterval(() => {
+				let dialog = document.getElementsByClassName(__target_dialog_class_name)[0]
+				if (dialog == null) {
+					clearInterval(interval)
+					resolve()
+				}
+			}, 1000)
+		})
+	}
 
 	function _close_dialog() {
 		for (let o of document.getElementsByClassName(__dialog_overlay_class_name)) {
@@ -242,6 +257,7 @@ const __jixia_extension_object = (function () {
 			await _async_download_one(singleTarget)
 			_close_dialog()
 			await _timer(1000)
+			await _wait_util_dialog_close()
 		}
 	}
 
