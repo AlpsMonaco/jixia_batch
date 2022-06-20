@@ -215,10 +215,18 @@ const __jixia_extension_object = (function () {
 	function _wait_util_dialog_close() {
 		return new Promise((resolve, reject) => {
 			let interval = setInterval(() => {
+				let i = 0
 				let dialog = document.getElementsByClassName(__target_dialog_class_name)[0]
 				if (dialog == null) {
 					clearInterval(interval)
 					resolve()
+				}
+				i++
+				if (i > 10) {
+					console.log("wait for dialog close timeout!")
+					i = 0
+					console.log("try to close dialog!")
+					_close_dialog()
 				}
 			}, 1000)
 		})
