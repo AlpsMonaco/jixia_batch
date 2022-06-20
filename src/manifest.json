@@ -1,0 +1,48 @@
+{
+    "manifest_version": 2,
+    "name": "JiXiaExtension",
+    "version": "1.0.0",
+    "description": "jixia download jixia_automatically",
+    "icons": {
+        "16": "img/jixia.png",
+        "48": "img/jixia.png",
+        "128": "img/jixia.png"
+    },
+    "browser_action": {
+        "default_icon": "img/jixia.png",
+        "default_title": "JiXiaExtension",
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "scripts": [
+            "js/background.js"
+        ]
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.jixia.ink/*",
+                "http://*.jixia.ink/*",
+                "https://*.jixia.ink/*",
+                "https://*.jixia.ink/*",
+                "https://*.jixia.pro/*",
+                "https://*.jixia.hk/*",
+                "https://*.jixia.hk/*",
+                "https://*.jixia.fit/*"
+            ],
+            "js": [
+                "js/jixia_extension.js"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "permissions": [
+        "webRequestBlocking",
+        "webRequest",
+        "storage",
+        "contextMenus"
+    ],
+    "web_accessible_resources": [
+        "js/inject.js"
+    ]
+}

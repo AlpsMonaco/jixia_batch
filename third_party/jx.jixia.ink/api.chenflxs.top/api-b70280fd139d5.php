@@ -1,0 +1,1 @@
+{"error":0,"msg":"ok","message":"ok","all":{"count":4763232,"size":"7.00PB"},"today":{"count":"17219","size":"27.06TB"}}
