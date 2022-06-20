@@ -133,6 +133,9 @@ const __jixia_extension_object = (function () {
 		if (msg.indexOf('转存文件失败') != -1) {
 			return _enum_msg_status.RESOLVE_FAILED
 		}
+		if (msg.indexOf('API连接中') != -1) {
+			return _enum_msg_status.RESOLVE_FAILED
+		}
 		return _enum_msg_status.ERROR
 	}
 
