@@ -9,44 +9,6 @@ const __jixia_extension_object = (function () {
 	const __dialog_overlay_class_name = 'mdui-overlay mdui-overlay-show'
 	const __dialog_action_bar_class_name = 'mdui-dialog-actions'
 
-
-	const _msg_container = (function () {
-		let _container = []
-		let _last_msg_id = -1
-
-		function _parse_msg_id(msg) {
-			let msg_id = msg.parentElement.id
-			let beginIndex = msg_id.indexOf('-')
-			let endIndex = msg_id.length
-			return parseInt(msg_id.substring(beginIndex + 1, endIndex))
-		}
-
-		return {
-			append: function (msg) {
-				_container.push(msg)
-			},
-			append_from_msg_element: function (msg) {
-				let msg_id = _parse_msg_id(msg)
-				if (msg_id <= _last_msg_id) {
-					return
-				}
-				_last_msg_id = msg_id
-				this.append(msg.innerHTML)
-			},
-			get_last: function () {
-				if (_container.length == 0) return null
-				return _container[_container.length - 1]
-			},
-			get_all: function () {
-				return _container
-			},
-			reset: function () {
-				_container = []
-				_last_msg_id = -1
-			}
-		}
-	})()
-
 	const _Enum = {
 		DownloadFromHere: 0,
 		CheckMessageLog: 1,
@@ -88,20 +50,23 @@ const __jixia_extension_object = (function () {
 	}
 
 	function _wait_for_dialog_open(target) {
+		console.log('waiting for target open dialog', target)
 		target.click()
 		return new Promise((resolve, reject) => {
+			let i = 0
 			let interval = setInterval(() => {
-				let msg = _msg_container.get_last()
-				if (msg != null) {
-					if (_parse_msg(msg) == _enum_msg_status.RESOLVE_FAILED) {
+				let dialog = document.getElementsByClassName(__target_dialog_class_name)[0]
+				if (dialog != null) {
+					console.log("open dialog success", target)
+					clearInterval(interval)
+					resolve(dialog)
+				} else {
+					i++
+					if (i > 20) {
+						console.error("dialog open timeout", target)
 						clearInterval(interval)
 						reject()
 					}
-				}
-				let dialog = document.getElementsByClassName(__target_dialog_class_name)[0]
-				if (dialog != null) {
-					clearInterval(interval)
-					resolve(dialog)
 				}
 			}, 1000)
 		})
@@ -122,6 +87,9 @@ const __jixia_extension_object = (function () {
 
 	function _parse_msg(msg) {
 		if (msg.indexOf('解析失败') != -1) {
+			return _enum_msg_status.RESOLVE_FAILED
+		}
+		if (msg.indexOf('获取失败') != -1) {
 			return _enum_msg_status.RESOLVE_FAILED
 		}
 		if (msg.indexOf('账号出现异常') != -1) {
@@ -185,7 +153,7 @@ const __jixia_extension_object = (function () {
 	}
 
 	async function _async_download_one(singleTarget) {
-		_msg_container.reset()
+		console.log("downloading...", singleTarget)
 		for (; ;) {
 			try {
 				let dialog = await _wait_for_dialog_open(singleTarget)
@@ -194,15 +162,16 @@ const __jixia_extension_object = (function () {
 				action.start()
 				let is_success = await _start_mission()
 				if (is_success) {
+					console.log("download success", singleTarget)
 					return
 				} else {
+					console.error("download failed,retrying...", singleTarget)
 					action.fix()
 					await _timer(1000)
 					await _wait_util_dialog_close()
 					continue
 				}
 			} catch {
-				_msg_container.reset()
 				_close_dialog()
 				await _timer(1000)
 				await _wait_util_dialog_close()
@@ -213,26 +182,22 @@ const __jixia_extension_object = (function () {
 
 
 	function _wait_util_dialog_close() {
+		console.log("waiting for dialog close")
 		return new Promise((resolve, reject) => {
 			let interval = setInterval(() => {
 				let i = 0
 				let dialog = document.getElementsByClassName(__target_dialog_class_name)[0]
 				if (dialog == null) {
+					console.log("dialog closed")
 					clearInterval(interval)
 					resolve()
-				}
-				i++
-				if (i > 10) {
-					console.log("wait for dialog close timeout!")
-					i = 0
-					console.log("try to close dialog!")
-					_close_dialog()
 				}
 			}, 1000)
 		})
 	}
 
 	function _close_dialog() {
+		console.log("closing dialog...")
 		for (let o of document.getElementsByClassName(__dialog_overlay_class_name)) {
 			o.click()
 		}
@@ -288,7 +253,7 @@ const __jixia_extension_object = (function () {
 					}
 					break;
 				case _Enum.CheckMessageLog:
-					console.log(_msg_container.get_all())
+					console.log("this feature is deprecated")
 					break;
 				case _Enum.SingleDownload:
 					let singleTarget = _lastRightClickEvent.target;
@@ -302,16 +267,6 @@ const __jixia_extension_object = (function () {
 					console.log("unknown request");
 			}
 		});
-	}
-
-	function _init_msg_receiver() {
-		setInterval(() => {
-			let list = document.getElementsByClassName(__msg_class_name)
-			for (let i = 0; i < list.length; i++) {
-				let msg = list[i]
-				_msg_container.append_from_msg_element(msg)
-			}
-		}, 500)
 	}
 
 	function _init_aria2_rpc() {
@@ -351,7 +306,6 @@ const __jixia_extension_object = (function () {
 	function _init() {
 		_load_inject_js()
 		_init_listener()
-		_init_msg_receiver()
 		_init_aria2_rpc()
 	}
 
