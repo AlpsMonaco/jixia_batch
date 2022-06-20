@@ -23,12 +23,15 @@ const __jixia_extension_object = (function () {
 
 		return {
 			append: function (msg) {
+				_container.push(msg)
+			},
+			append_from_msg_element: function (msg) {
 				let msg_id = _parse_msg_id(msg)
 				if (msg_id <= _last_msg_id) {
 					return
 				}
 				_last_msg_id = msg_id
-				_container.push(msg)
+				this.append(msg)
 			},
 			get_last: function () {
 				if (_container.length == 0) return null
@@ -118,12 +121,6 @@ const __jixia_extension_object = (function () {
 
 
 	function _parse_msg(msg) {
-		if (msg.indexOf('已经开始下载') != -1) {
-			return _enum_msg_status.START
-		}
-		if (msg.indexOf('下载完成') != -1) {
-			return _enum_msg_status.SUCCESS
-		}
 		if (msg.indexOf('解析失败') != -1) {
 			return _enum_msg_status.RESOLVE_FAILED
 		}
@@ -140,14 +137,30 @@ const __jixia_extension_object = (function () {
 	}
 
 
+	const _msg_status = (function () {
+		let _status = _enum_msg_status.START
+
+		return {
+			GetStatus: function () {
+				return _status
+			},
+			SetStatus: function (status) {
+				_status = status
+			},
+			ResetStatus: function () {
+				_status = _enum_msg_status.START
+			}
+		}
+	})()
+
+
 	function _start_mission() {
+		_msg_status.ResetStatus()
 		return new Promise(
 			(resolve, reject) => {
 				let interval = setInterval(
 					() => {
-						let msg = _msg_container.get_last()
-						if (msg == null) return
-						let status = _parse_msg(msg.innerHTML)
+						let status = _msg_status.GetStatus()
 						switch (status) {
 							case _enum_msg_status.START:
 								return
@@ -181,6 +194,9 @@ const __jixia_extension_object = (function () {
 					return
 				} else {
 					action.fix()
+					_timer(1000)
+					_close_dialog()
+					_timer(1000)
 					continue
 				}
 			} catch {
@@ -269,15 +285,50 @@ const __jixia_extension_object = (function () {
 			let list = document.getElementsByClassName(__msg_class_name)
 			for (let i = 0; i < list.length; i++) {
 				let msg = list[i]
-				_msg_container.append(msg)
+				_msg_container.append_from_msg_element(msg)
 			}
 		}, 500)
+	}
+
+	function _init_aria2_rpc() {
+		const param = {
+			host: '127.0.0.1',
+			port: 16800,
+			secure: false,
+			secret: '',
+			path: '/jsonrpc'
+		}
+
+		var Aria2 = require('aria2');
+		const aria2 = new Aria2(param);
+
+		async function InitNotification() {
+			const notifications = await aria2.listNotifications();
+			return notifications;
+		}
+
+		aria2
+			.open()
+			.then(() => {
+				console.log("open aria2c rpc");
+				aria2.on("onDownloadStart", (param) => {
+					_msg_status.SetStatus(_enum_msg_status.START)
+				})
+				aria2.on("onDownloadError", (param) => {
+					_msg_status.SetStatus(_enum_msg_status.ERROR)
+				})
+				aria2.on("onDownloadComplete", (param) => {
+					_msg_status.SetStatus(_enum_msg_status.SUCCESS)
+				})
+			})
+			.catch(err => console.log("error", err));
 	}
 
 	function _init() {
 		_load_inject_js()
 		_init_listener()
 		_init_msg_receiver()
+		_init_aria2_rpc()
 	}
 
 	function _get_current_list() {
