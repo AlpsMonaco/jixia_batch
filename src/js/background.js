@@ -14,14 +14,14 @@ chrome.contextMenus.create({
 	}
 });
 
-chrome.contextMenus.create({
-	title: "查看消息记录",
-	contexts: ['all'],
-	onclick: (info, tab) => {
-		chrome.tabs.sendMessage(tab.id, Enum.CheckMessageLog, () => {
-		});
-	}
-});
+// chrome.contextMenus.create({
+// 	title: "查看消息记录",
+// 	contexts: ['all'],
+// 	onclick: (info, tab) => {
+// 		chrome.tabs.sendMessage(tab.id, Enum.CheckMessageLog, () => {
+// 		});
+// 	}
+// });
 
 chrome.contextMenus.create({
 	title: "仅下载该项目",
