@@ -269,7 +269,29 @@ const __jixia_extension_object = (function () {
 		});
 	}
 
-	function _init_aria2_rpc() {
+
+	function _connect_aria2_rpc(aria2) {
+		return new Promise((resolve, reject) => {
+			aria2
+				.open()
+				.then(() => {
+					console.log("open aria2c rpc");
+					aria2.on("onDownloadStart", (param) => {
+						_msg_status.SetStatus(_enum_msg_status.START)
+					})
+					aria2.on("onDownloadError", (param) => {
+						_msg_status.SetStatus(_enum_msg_status.ERROR)
+					})
+					aria2.on("onDownloadComplete", (param) => {
+						_msg_status.SetStatus(_enum_msg_status.SUCCESS)
+					})
+					resolve()
+				})
+				.catch(err => { console.log("error", err); reject() });
+		})
+	}
+
+	async function _init_aria2_rpc() {
 		const param = {
 			host: '127.0.0.1',
 			port: 16800,
@@ -281,26 +303,18 @@ const __jixia_extension_object = (function () {
 		var Aria2 = require('aria2');
 		const aria2 = new Aria2(param);
 
-		async function InitNotification() {
-			const notifications = await aria2.listNotifications();
-			return notifications;
+		for (; ;) {
+			try {
+				console.log("connecting to aria2c rpc...")
+				await _connect_aria2_rpc(aria2)
+				console.log("connected to aria2c rpc")
+				break
+			} catch {
+				console.log("connect failed, retrying...")
+				await _timer(1000)
+				continue
+			}
 		}
-
-		aria2
-			.open()
-			.then(() => {
-				console.log("open aria2c rpc");
-				aria2.on("onDownloadStart", (param) => {
-					_msg_status.SetStatus(_enum_msg_status.START)
-				})
-				aria2.on("onDownloadError", (param) => {
-					_msg_status.SetStatus(_enum_msg_status.ERROR)
-				})
-				aria2.on("onDownloadComplete", (param) => {
-					_msg_status.SetStatus(_enum_msg_status.SUCCESS)
-				})
-			})
-			.catch(err => console.log("error", err));
 	}
 
 	function _init() {
