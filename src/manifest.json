@@ -28,7 +28,8 @@
                 "https://*.jixia.pro/*",
                 "https://*.jixia.hk/*",
                 "https://*.jixia.hk/*",
-                "https://*.jixia.fit/*"
+                "https://*.jixia.fit/*",
+                "https://*.baidui.vip/*"
             ],
             "js": [
                 "js/bundle.js",
